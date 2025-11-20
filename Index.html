@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PiPay Nigeria – Airtime, Data & Bills with Pi</title>
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <style>
+    body { font-family: Arial; background: #f4f4f4; padding: 20px; text-align: center; }
+    .card { background: white; margin: 15px auto; padding: 20px; border-radius: 15px; max-width: 400px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    button { background: #5B44BA; color: white; padding: 15px; border: none; border-radius: 10px; width: 100%; font-size: 18px; margin-top: 10px; }
+    input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; }
+    .rate { font-size: 24px; font-weight: bold; color: #5B44BA; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🇳🇬 PiPay Nigeria</h1>
+    <p>Pay Airtime, Data & Bills with Pi</p>
+    <div class="rate">Loading rate...</div>
+    <small id="lastupdate"></small>
+  </div>
+
+  <div class="card">
+    <select id="service">
+      <option value="airtime">Airtime Top-up</option>
+      <option value="data">Data Bundle</option>
+      <option value="electricity">Electricity Bill</option>
+      <option value="betting">Bet9ja / SportyBet</option>
+      <option value="sellpi">Sell Pi → Get Naira (P2P)</option>
+    </select>
+
+    <input id="phone" placeholder="Phone Number (e.g. 09012345678)" />
+    <input id="amount" type="number" placeholder="Amount in Naira (₦)" />
+
+    <button onclick="startPayment()">Pay with Pi Now</button>
+    <p><small>2–3% service fee included</small></p>
+  </div>
+
+  <script>
+    let currentRate = 0;
+    Pi.init({ version: "2.0" });
+
+    async function loadRate() {
+      try {
+        const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=pi-network&vs_currencies=ngn");
+        const data = await res.json();
+        currentRate = data["pi-network"].ngn;
+        document.querySelector(".rate").innerHTML = `1 π = ₦${currentRate.toLocaleString()}`;
+        document.getElementById("lastupdate").innerText = "Rate updated: " + new Date().toLocaleTimeString();
+        setTimeout(loadRate, 30000); // refresh every 30 sec
+      } catch(e) { document.querySelector(".rate").innerText = "Rate offline"; }
+    }
+    loadRate();
+
+    async function startPayment() {
+      const service = document.getElementById("service").value;
+      const phone = document.getElementById("phone").value;
+      const ngn = parseFloat(document.getElementById("amount").value);
+
+      if (!ngn || ngn < 100) return alert("Enter amount ≥ ₦100");
+      if (service !== "sellpi" && !phone) return alert("Enter phone number");
+
+      const piAmount = (ngn / currentRate) * 1.025; // 2.5% fee example
+
+      const memo = service === "sellpi" 
+        ? `Sell Pi → Naira ₦${ngn.toLocaleString()} | ${phone}`
+        : `${service.toUpperCase()} ₦${ngn.toLocaleString()} | ${phone}`;
+
+      try {
+        const payment = await Pi.createPayment({
+          amount: piAmount,
+          memo: memo,
+          metadata: { service, phone, ngnAmount: ngn }
+        });
+
+        // Payment approved → send to your backend (free with Vercel)
+        fetch("https://yourusername.vercel.app/api/deliver", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ payment, service, phone, ngn })
+        }).then(r => r.json()).then(res => {
+          if (res.success) alert("✅ Success! Check your phone in 10–60 seconds");
+          else alert("Issue: " + res.error);
+        });
+
+      } catch(err) { alert("Payment cancelled or failed"); }
+    }
+  </script>
+</body>
+</html>
