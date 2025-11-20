@@ -4,7 +4,52 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PiPay Nigeria – Airtime, Data & Bills with Pi</title>
-  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <script<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+<script>
+  Pi.init({ 
+    version: "2",
+    // ←←← ADD THIS LINE BELOW
+    sandbox: false   // set to true only if you're still testing with fake Pi
+  });
+
+  // ←←← ADD YOUR USERNAME HERE (this is the important part)
+  const receiver = "@Randzy";   // ← change this!
+
+  async function pay() {
+    const amount = parseFloat(document.getElementById("amount").value);
+    if (!amount || amount <= 0) {
+      alert("Please enter a valid amount");
+      return;
+    }
+
+    Pi.authenticate(["username", "payments"], async (user) => {
+      try {
+        const paymentId = await Pi.createPayment({
+          amount: amount,
+          memo: "Airtime/Data/Bills - PayPi Nigeria",
+          metadata: { service: "PayPi Nigeria" }
+        }, {
+          // This sends the Pi directly to your wallet
+          onReadyForServerApproval(paymentId) {
+            Pi.approvePayment(paymentId);
+          },
+          onReadyForServerCompletion(paymentId, txid) {
+            Pi.completePayment(paymentId, txid);
+            alert("Payment successful! You received " + amount + " π");
+          },
+          onCancel(paymentId) {
+            alert("Payment cancelled");
+          },
+          onError(error) {
+            alert("Error: " + error.message);
+          }
+        });
+      } catch (err) {
+        alert("Payment failed: " + err.message);
+      }
+    });
+  }
+</script>
   <style>
     body { font-family: Arial; background: #f4f4f4; padding: 20px; text-align: center; }
     .card { background: white; margin: 15px auto; padding: 20px; border-radius: 15px; max-width: 400px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
