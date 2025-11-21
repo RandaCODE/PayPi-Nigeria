@@ -3,46 +3,36 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>PayPi Nigeria – Airtime, Data & Bills with Pi</title>
+  <title>PayPi Instant ⚡ Airtime • Bills • Naira</title>
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-  <script>
-    Pi.init({ 
-      version: "2",
-      sandbox: true   // Set to false when you go live
-    });
-  </script>
-
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; text-align: center; margin: 0; }
-    .card { background: white; margin: 15px auto; padding: 20px; border-radius: 15px; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-    button { background: #5B44BA; color: white; padding: 15px; border: none; border-radius: 10px; width: 100%; font-size: 18px; margin-top: 20px; cursor: pointer; }
-    input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 16px; }
-    .rate { font-size: 24px; font-weight: bold; color: #5B44BA; }
-    .hidden { display: none !important; }
-    label { text-align: left; display: block; margin-top: 15px; margin-bottom: 5px; font-weight: bold; color: #333; }
-    small { color: #666; }
+    body {font-family: system-ui, sans-serif; background: #f8f9fa; margin:0; padding:15px;}
+    .card {background:#fff; max-width:380px; margin:15px auto; padding:20px; border-radius:16px; box-shadow:0 6px 20px rgba(0,0,0,0.08);}
+    h1 {margin:0; color:#5B44BA;}
+    input, select {width:100%; padding:14px; margin:8px 0; border:1px solid #ddd; border-radius:12px; box-sizing:border-box; font-size:16px;}
+    button {background:linear-gradient(135deg,#5B44BA,#4636A3); color:white; border:none; padding:16px; border-radius:12px; width:100%; font-size:18px; font-weight:bold; margin-top:20px;}
+    label {font-weight:600; margin-top:12px; display:block; color:#333;}
+    .hidden {display:none;}
+    .rate {font-size:20px; color:#5B44BA; font-weight:bold;}
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>🇳🇬 PayPi Nigeria</h1>
-    <p>Top-up Airtime, Data, Electricity & More with Pi</p>
-    <div class="rate">Loading Pi rate...</div>
-    <small id="lastupdate"></small>
+    <h1>PayPi Instant ⚡</h1>
+    <p>Airtime • Electricity • Betting • Cashout</p>
+    <div class="rate">1 π = ₦<span id="piRate">860</span></div>
   </div>
 
   <div class="card">
-    <select id="service" onchange="toggleFields()">
-      <option value="">-- Select Service --</option>
-      <option value="airtime">Airtime Top-up</option>
-      <option value="data">Data Bundle</option>
-      <option value="electricity">Electricity Bill (JED)</option>
-      <option value="betting">Bet9ja / SportyBet Funding</option>
-      <option value="sellpi">Sell Pi → Get Naira (P2P)</option>
+    <select id="service" onchange="showFields()">
+      <option value="">Choose service</option>
+      <option value="airtime">Buy Airtime</option>
+      <option value="electricity">Pay Electricity (JED)</option>
+      <option value="betting">Fund Bet9ja / SportyBet</option>
+      <option value="cashout">Sell Pi → Bank (Instant Naira)</option>
     </select>
 
-    <!-- Network (only for Airtime & Data) -->
-    <div id="networkSection" class="hidden">
+    <div id="networkBox" class="hidden">
       <label>Network</label>
       <select id="network">
         <option value="mtn">MTN</option>
@@ -52,148 +42,99 @@
       </select>
     </div>
 
-    <!-- Phone Number -->
-    <div id="phoneSection">
+    <div id="phoneBox">
       <label id="phoneLabel">Phone Number</label>
-      <input id="phone" placeholder="e.g. 09012345678" />
+      <input id="phone" placeholder="08012345678" />
     </div>
 
-    <!-- Electricity - JED Meter -->
-    <div id="meterSection" class="hidden">
-      <label>Meter Number (JED)</label>
-      <input id="meterNumber" placeholder="Enter your JED meter number" />
+    <div id="meterBox" class="hidden">
+      <label>JED Meter Number</label>
+      <input id="meter" placeholder="5412XXXXXXXX" />
     </div>
 
-    <!-- Bank Details for Sell Pi -->
-    <div id="bankSection" class="hidden">
+    <div id="bankBox" class="hidden">
       <label>Bank Name</label>
-      <input id="bankName" placeholder="e.g. GTBank, Access Bank, Zenith" />
+      <input id="bankName" placeholder="e.g. GTBank, Access Bank" list="banks" />
+      <datalist id="banks">
+        <option>GTBank</option><option>Access Bank</option><option>Zenith Bank</option><option>First Bank</option><option>UBA</option>
+      </datalist>
       <label>Account Number</label>
-      <input id="accountNumber" placeholder="Your 10-digit Naira account number" />
+      <input id="accNum" placeholder="0123456789" />
       <label>Account Name</label>
-      <input id="accountName" placeholder="Full name as on the account" />
+      <input id="accName" placeholder="Full name on account" />
     </div>
 
-    <!-- Amount -->
-    <label>Amount in Naira (₦)</label>
-    <input id="amount" type="number" placeholder="Minimum ₦100" />
+    <label>Amount (₦)</label>
+    <input id="ngn" type="number" placeholder="Minimum ₦100" min="100" />
 
-    <button onclick="startPayment()">Pay with Pi Now</button>
-    <p><small>2–3% service fee included | Delivery in 10–60 seconds</small></p>
+    <button onclick="payWithPi()">Pay with Pi</button>
+    <p style="font-size:13px; color:#666;">2.5% fee • Delivery in 10–60 seconds</p>
   </div>
 
   <script>
-    let currentRate = 850; // fallback
-
-    // Load live Pi/NGN rate
+    let rate = 860;
     async function loadRate() {
       try {
-        const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=pi-network&vs_currencies=ngn");
-        const data = await res.json();
-        currentRate = data["pi-network"]?.ngn || 850;
-        document.querySelector(".rate").innerHTML = `1 π = ₦${currentRate.toLocaleString()}`;
-        document.getElementById("lastupdate").innerText = "Updated: " + new Date().toLocaleTimeString();
-        setTimeout(loadRate, 30000);
-      } catch(e) {
-        document.querySelector(".rate").innerText = "Rate offline (using ₦850/π)";
-      }
+        const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=pi-network&vs_currencies=ngn");
+        const d = await r.json();
+        rate = d["pi-network"].ngn || 860;
+        document.getElementById("piRate").textContent = rate.toLocaleString();
+      } catch(e) {}
+      setTimeout(loadRate, 30000);
     }
     loadRate();
 
-    // Show/hide fields based on service
-    function toggleFields() {
-      const service = document.getElementById("service").value;
-
-      // Hide all optional sections
-      document.getElementById("networkSection").classList.add("hidden");
-      document.getElementById("phoneSection").classList.remove("hidden");
-      document.getElementById("meterSection").classList.add("hidden");
-      document.getElementById("bankSection").classList.add("hidden");
-
-      // Customize based on service
-      if (service === "airtime" || service === "data") {
-        document.getElementById("networkSection").classList.remove("hidden");
-        document.getElementById("phoneLabel").innerText = "Phone Number";
-      }
-      if (service === "electricity") {
-        document.getElementById("meterSection").classList.remove("hidden");
-        document.getElementById("phoneSection").classList.add("hidden");
-      }
-      if (service === "sellpi") {
-        document.getElementById("bankSection").classList.remove("hidden");
-        document.getElementById("phoneSection").classList.add("hidden");
-      }
-      if (service === "betting") {
-        document.getElementById("phoneLabel").innerText = "Bet9ja / SportyBet User ID or Phone";
-      }
+    function showFields() {
+      const s = document.getElementById("service").value;
+      document.getElementById("networkBox").classList.toggle("hidden", s !== "airtime");
+      document.getElementById("meterBox").classList.toggle("hidden", s !== "electricity");
+      document.getElementById("bankBox").classList.toggle("hidden", s !== "cashout");
+      document.getElementById("phoneBox").style.display = (s === "electricity" || s === "cashout") ? "none" : "block";
+      document.getElementById("phoneLabel").textContent = (s === "betting") ? "Betting ID or Phone" : "Phone Number";
     }
 
-    // Main payment function
-    async function startPayment() {
+    async function payWithPi() {
       const service = document.getElementById("service").value;
-      const amountNGN = parseFloat(document.getElementById("amount").value);
+      const ngn = parseFloat(document.getElementById("ngn").value);
+      if (!service) return alert("Select a service");
+      if (ngn < 100) return alert("Minimum ₦100");
 
-      if (!service) return alert("Please select a service");
-      if (!amountNGN || amountNGN < 100) return alert("Minimum amount is ₦100");
+      const piAmount = Math.round((ngn / rate) * 1.025 * 1000) / 1000; // +2.5% fee
 
-      const piAmount = Math.round((amountNGN / currentRate) * 1.025 * 1000) / 1000; // +2.5% fee
+      const data = {
+        service,
+        ngn,
+        phone: document.getElementById("phone").value,
+        network: document.getElementById("network")?.value?.toUpperCase(),
+        meter: document.getElementById("meter").value,
+        bankName: document.getElementById("bankName").value,
+        accNum: document.getElementById("accNum").value,
+        accName: document.getElementById("accName").value
+      };
 
-      let memo = "";
-      const phone = document.getElementById("phone").value.trim();
-      const network = document.getElementById("network")?.value.toUpperCase() || "";
-      const meter = document.getElementById("meterNumber").value.trim();
-      const bankName = document.getElementById("bankName").value.trim();
-      const accNumber = document.getElementById("accountNumber").value.trim();
-      const accName = document.getElementById("accountName").value.trim();
-
-      // Validation & Memo creation
-      if (service === "airtime" || service === "data") {
-        if (!phone || phone.length < 11) return alert("Enter a valid phone number");
-        memo = `${network} ${service.toUpperCase()} ₦${amountNGN.toLocaleString()} | ${phone}`;
-      }
-      else if (service === "electricity") {
-        if (!meter) return alert("Enter your JED meter number");
-        memo = `JED Electricity ₦${amountNGN.toLocaleString()} | Meter: ${meter}`;
-      }
-      else if (service === "sellpi") {
-        if (!bankName || !accNumber || !accName) return alert("Please fill all bank details");
-        memo = `Sell Pi → ₦${amountNGN.toLocaleString()} | ${bankName} | ${accNumber} | ${accName}`;
-      }
-      else if (service === "betting") {
-        if (!phone) return alert("Enter your betting ID or phone");
-        memo = `Betting Funding ₦${amountNGN.toLocaleString()} | ${phone}`;
-      }
+      const memo = service === "cashout"
+        ? `Cashout ₦${ngn} → ${data.bankName} ${data.accNum}`
+        : service === "electricity"
+        ? `JED Bill ₦${ngn} | Meter ${data.meter}`
+        : `${data.network || ""} ${service.toUpperCase()} ₦${ngn} | ${data.phone}`;
 
       try {
         const payment = await Pi.createPayment({
           amount: piAmount,
           memo: memo,
-          metadata: { service, amountNGN, phone, network, meter, bankName, accNumber, accName }
-        }, {
-          onReadyForServerApproval() { Pi.approvePayment(payment.identifier); },
-          onReadyForServerCompletion() { Pi.completePayment(payment.identifier, payment.txid); },
-          onCancel() { alert("Payment cancelled"); },
-          onError(err) { alert("Error: " + err.message); }
+          metadata: data
         });
 
-        // Send to your backend (replace with your real URL)
-        fetch("https://yourusername.vercel.app/api/deliver", {
+        // SEND TO YOUR BACKEND
+        await fetch("https://your-vercel-app.vercel.app/api/deliver", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ payment, service, amountNGN, phone, network, meter, bankName, accNumber, accName })
-        })
-        .then(r => r.json())
-        .then(res => {
-          if (res.success) {
-            alert("✅ Payment successful! Processing your request now (10–60 secs)");
-          } else {
-            alert("Issue: " + (res.error || "Try again"));
-          }
-        })
-        .catch(() => alert("Network error – check your connection"));
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({paymentId: payment.identifier, txid: payment.txid, ...data, piAmount})
+        });
 
-      } catch (err) {
-        alert("Payment failed or cancelled");
+        alert("Payment received! Delivering instantly...");
+      } catch (e) {
+        alert("Payment cancelled or failed");
       }
     }
   </script>
