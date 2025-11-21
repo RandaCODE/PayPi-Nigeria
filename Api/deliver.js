@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   const API_KEY = process.env.MONNIFY_API_KEY;
   const SECRET_KEY = process.env.MONNIFY_SECRET;
 
-  const token = Buffer.from(`${API_KEY}:${SECRET_KEY}`).toString('base64');
+  const token = Buffer.from(`${MK_TEST_DH0YAZQ502}:${RG2JQTLWFNN1JB6STTG19EYU1ZJJ7HQX}`).toString('base64');
 
   try {
     const login = await fetch("https://api.monnify.com/api/v1/auth/login/", {
