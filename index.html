@@ -3,140 +3,193 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>PayPi Instant ⚡ Airtime • Bills • Naira</title>
+  <title>PayPi Queen 👑 | Airtime • Data • Electricity • Cashout</title>
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <script>Pi.init({ version: "2", sandbox: true });</script> <!-- Change sandbox: false when live -->
   <style>
-    body {font-family: system-ui, sans-serif; background: #f8f9fa; margin:0; padding:15px;}
-    .card {background:#fff; max-width:380px; margin:15px auto; padding:20px; border-radius:16px; box-shadow:0 6px 20px rgba(0,0,0,0.08);}
-    h1 {margin:0; color:#5B44BA;}
-    input, select {width:100%; padding:14px; margin:8px 0; border:1px solid #ddd; border-radius:12px; box-sizing:border-box; font-size:16px;}
-    button {background:linear-gradient(135deg,#5B44BA,#4636A3); color:white; border:none; padding:16px; border-radius:12px; width:100%; font-size:18px; font-weight:bold; margin-top:20px;}
-    label {font-weight:600; margin-top:12px; display:block; color:#333;}
+    body {font-family: system-ui,sans-serif; background: linear-gradient(135deg,#f8f9fa,#e0d4ff); margin:0; padding:15px; min-height:100vh;}
+    .card {background:#fff; max-width:400px; margin:15px auto; padding:25px; border-radius:20px; box-shadow:0 10px 30px rgba(90,60,180,0.15);}
+    h1 {margin:0; color:#5B44BA; text-align:center;}
+    select, input {width:100%; padding:14px; margin:8px 0; border:1px solid #ddd; border-radius:12px; box-sizing:border-box; font-size:16px;}
+    button {background:linear-gradient(135deg,#5B44BA,#8a2be2); color:white; border:none; padding:18px; border-radius:14px; width:100%; font-size:19px; font-weight:bold; margin-top:25px;}
+    label {font-weight:700; margin-top:15px; display:block; color:#333;}
     .hidden {display:none;}
-    .rate {font-size:20px; color:#5B44BA; font-weight:bold;}
+    .rate {font-size:22px; text-align:center; color:#5B44BA; font-weight:bold; margin:15px 0;}
+    .plan-grid {display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;}
+    .plan {background:#f0e8ff; padding:12px; border-radius:12px; text-align:center; cursor:pointer; font-size:14px;}
+    .plan:hover {background:#d8b4fe;}
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>PayPi Instant ⚡</h1>
-    <p>Airtime • Electricity • Betting • Cashout</p>
-    <div class="rate">1 π = ₦<span id="piRate">860</span></div>
-  </div>
-
-  <div class="card">
-    <select id="service" onchange="showFields()">
-      <option value="">Choose service</option>
+    <h1>PayPi Queen 👑</h1>
+    <div class="rate">1 π = ₦<span id="rate">860</span></div>
+    <select id="service" onchange="toggleService()">
+      <option value="">Choose Service</option>
       <option value="airtime">Buy Airtime</option>
-      <option value="electricity">Pay Electricity (JED)</option>
-      <option value="betting">Fund Bet9ja / SportyBet</option>
-      <option value="cashout">Sell Pi → Bank (Instant Naira)</option>
+      <option value="data">Buy Data Plans</option>
+      <option value="electricity">Pay Electricity (All DISCOs)</option>
+      <option value="betting">Fund Betting Wallet</option>
+      <option value="cashout">Sell Pi → Instant Bank</option>
     </select>
 
-    <div id="networkBox" class="hidden">
+    <!-- Network -->
+    <div id="networkDiv" class="hidden">
       <label>Network</label>
       <select id="network">
-        <option value="mtn">MTN</option>
-        <option value="airtel">Airtel</option>
-        <option value="glo">Glo</option>
+        <option value="MTN">MTN</option>
+        <option value="Airtel">Airtel</option>
+        <option value="Glo">Glo</option>
         <option value="9mobile">9mobile</option>
       </select>
     </div>
 
-    <div id="phoneBox">
+    <!-- Data Plans Grid -->
+    <div id="dataPlans" class="hidden"></div>
+
+    <!-- DISCO Selection -->
+    <div id="discoDiv" class="hidden">
+      <label>Electricity Provider</label>
+      <select id="disco">
+        <option value="AEDC">Abuja (AEDC)</option>
+        <option value="BEDC">Benin (BEDC)</option>
+        <option value="EKEDC">Eko (EKEDC)</option>
+        <option value="EEDC">Enugu (EEDC)</option>
+        <option value="IBEDC">Ibadan (IBEDC)</option>
+        <option value="IKEDC">Ikeja (IKEDC)</option>
+        <option value="JED">Jos (JED)</option>
+        <option value="KAEDCO">Kaduna (KAEDCO)</option>
+        <option value="KEDCO">Kano (KEDCO)</option>
+        <option value="PHED">Port Harcourt (PHED)</option>
+        <option value="YEDC">Yola (YEDC)</option>
+      </select>
+    </div>
+
+    <!-- Phone / Meter / Betting ID -->
+    <div id="phoneDiv">
       <label id="phoneLabel">Phone Number</label>
       <input id="phone" placeholder="08012345678" />
     </div>
-
-    <div id="meterBox" class="hidden">
-      <label>JED Meter Number</label>
-      <input id="meter" placeholder="5412XXXXXXXX" />
+    <div id="meterDiv" class="hidden">
+      <label>Meter Number</label>
+      <input id="meter" placeholder="5412XXXXXXXXXX" />
     </div>
 
-    <div id="bankBox" class="hidden">
+    <!-- Bank Details (saved automatically) -->
+    <div id="bankDiv" class="hidden">
       <label>Bank Name</label>
-      <input id="bankName" placeholder="e.g. GTBank, Access Bank" list="banks" />
+      <input id="bankName" placeholder="GTBank, Access, Zenith..." list="banks" />
       <datalist id="banks">
-        <option>GTBank</option><option>Access Bank</option><option>Zenith Bank</option><option>First Bank</option><option>UBA</option>
+        <option>GTBank</option><option>Access Bank</option><option>Zenith Bank</option><option>First Bank</option><option>UBA</option><option>Kuda</option>
       </datalist>
       <label>Account Number</label>
       <input id="accNum" placeholder="0123456789" />
       <label>Account Name</label>
-      <input id="accName" placeholder="Full name on account" />
+      <input id="accName" placeholder="Your full name" />
     </div>
 
-    <label>Amount (₦)</label>
-    <input id="ngn" type="number" placeholder="Minimum ₦100" min="100" />
+    <label id="amountLabel">Amount (₦)</label>
+    <input id="amount" type="number" placeholder="Minimum ₦100" min="100" />
 
-    <button onclick="payWithPi()">Pay with Pi</button>
-    <p style="font-size:13px; color:#666;">2.5% fee • Delivery in 10–60 seconds</p>
+    <button onclick="payWithPi()">Pay with Pi 👑</button>
+    <p style="text-align:center; font-size:13px; color:#666; margin-top:15px;">2.5% fee • Instant delivery</p>
   </div>
 
-  <script>
-    let rate = 860;
-    async function loadRate() {
-      try {
-        const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=pi-network&vs_currencies=ngn");
-        const d = await r.json();
-        rate = d["pi-network"].ngn || 860;
-        document.getElementById("piRate").textContent = rate.toLocaleString();
-      } catch(e) {}
-      setTimeout(loadRate, 30000);
+<script>
+  let rate = 860;
+  async function loadRate(){ try{ const r=await fetch("https://api.coingecko.com/api/v3/simple/price?ids=pi-network&vs_currencies=ngn"); const d=await r.json(); rate=d["pi-network"].ngn||860; document.getElementById("rate").textContent=rate.toLocaleString(); }catch(e){} setTimeout(loadRate,30000);} loadRate();
+
+  // Load saved bank
+  if(localStorage.bank) {
+    const b = JSON.parse(localStorage.bank);
+    document.getElementById("bankName").value = b.bankName;
+    document.getElementById("accNum").value = b.accNum;
+    document.getElementById("accName").value = b.accName;
+  }
+
+  const dataPlans = {
+    MTN: [
+      {name:"500MB Daily", price:145, gb:"0.5GB"},
+      {name:"1GB Daily", price:285, gb:"1GB"},
+      {name:"2GB Daily", price:570, gb:"2GB"},
+      {name:"1.5GB Weekly", price:480, gb:"1.5GB"},
+      {name:"6GB Weekly", price:1440, gb:"6GB"},
+      {name:"10GB Monthly", price:2800, gb:"10GB"},
+      {name:"40GB Monthly", price:9300, gb:"40GB"},
+      {name:"120GB 60 Days", price:18000, gb:"120GB"}
+    ],
+    Airtel: [
+      {name:"500MB Daily", price:140, gb:"0.5GB"},
+      {name:"2GB Daily", price:560, gb:"2GB"},
+      {name:"6GB Weekly", price:1450, gb:"6GB"},
+      {name:"20GB Monthly", price:4700, gb:"20GB"}
+    ],
+    Glo: [
+      {name:"1.05GB Daily", price:235, gb:"1.05GB"},
+      {name:"5.8GB Weekly", price:1350, gb:"5.8GB"},
+      {name:"20GB Monthly", price:4600, gb:"20GB"}
+    ],
+    "9mobile": [
+      {name:"500MB Daily", price:95, gb:"0.5GB"},
+      {name:"7GB Weekly", price:1425, gb:"7GB"},
+      {name:"15GB Monthly", price:3800, gb:"15GB"}
+    ]
+  };
+
+  function toggleService() {
+    const s = document.getElementById("service").value;
+    document.getElementById("networkDiv").classList.toggle("hidden", !["airtime","data"].includes(s));
+    document.getElementById("discoDiv").classList.toggle("hidden", s!=="electricity");
+    document.getElementById("meterDiv").classList.toggle("hidden", s!=="electricity");
+    document.getElementById("bankDiv").classList.toggle("hidden", s!=="cashout");
+    document.getElementById("phoneDiv").style.display = (s==="electricity"||s==="cashout") ? "none" : "block";
+    document.getElementById("phoneLabel").textContent = s==="betting" ? "Betting ID / Phone" : "Phone Number";
+
+    // Show data plans
+    if(s==="data") {
+      const net = document.getElementById("network").value;
+      const container = document.getElementById("dataPlans");
+      container.innerHTML = `<label>${net} Data Plans</label><div class="plan-grid">${dataPlans[net].map(p=>`<div class="plan" onclick="selectPlan(${p.price})">${p.gb}<br>₦${p.price}<br><small>${p.name}</small></div>`).join("")}</div>`;
+      container.classList.remove("hidden");
+    } else {
+      document.getElementById("dataPlans").classList.add("hidden");
     }
-    loadRate();
+  }
+  function selectPlan(price){ document.getElementById("amount").value = price; }
 
-    function showFields() {
-      const s = document.getElementById("service").value;
-      document.getElementById("networkBox").classList.toggle("hidden", s !== "airtime");
-      document.getElementById("meterBox").classList.toggle("hidden", s !== "electricity");
-      document.getElementById("bankBox").classList.toggle("hidden", s !== "cashout");
-      document.getElementById("phoneBox").style.display = (s === "electricity" || s === "cashout") ? "none" : "block";
-      document.getElementById("phoneLabel").textContent = (s === "betting") ? "Betting ID or Phone" : "Phone Number";
-    }
+  async function payWithPi() {
+    const service = document.getElementById("service").value;
+    const amount = parseFloat(document.getElementById("amount").value);
+    if(!service) return alert("Pick a service queen");
+    if(amount<100) return alert("₦100 minimum");
 
-    async function payWithPi() {
-      const service = document.getElementById("service").value;
-      const ngn = parseFloat(document.getElementById("ngn").value);
-      if (!service) return alert("Select a service");
-      if (ngn < 100) return alert("Minimum ₦100");
+    const piAmount = Math.round((amount / rate) * 1.025 * 1000)/1000;
 
-      const piAmount = Math.round((ngn / rate) * 1.025 * 1000) / 1000; // +2.5% fee
-
-      const data = {
-        service,
-        ngn,
-        phone: document.getElementById("phone").value,
-        network: document.getElementById("network")?.value?.toUpperCase(),
-        meter: document.getElementById("meter").value,
+    // Save bank
+    if(service==="cashout"){
+      localStorage.bank = JSON.stringify({
         bankName: document.getElementById("bankName").value,
         accNum: document.getElementById("accNum").value,
         accName: document.getElementById("accName").value
-      };
-
-      const memo = service === "cashout"
-        ? `Cashout ₦${ngn} → ${data.bankName} ${data.accNum}`
-        : service === "electricity"
-        ? `JED Bill ₦${ngn} | Meter ${data.meter}`
-        : `${data.network || ""} ${service.toUpperCase()} ₦${ngn} | ${data.phone}`;
-
-      try {
-        const payment = await Pi.createPayment({
-          amount: piAmount,
-          memo: memo,
-          metadata: data
-        });
-
-        // SEND TO YOUR BACKEND
-        await fetch("https://your-vercel-app.vercel.app/api/deliver", {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({paymentId: payment.identifier, txid: payment.txid, ...data, piAmount})
-        });
-
-        alert("Payment received! Delivering instantly...");
-      } catch (e) {
-        alert("Payment cancelled or failed");
-      }
+      });
     }
-  </script>
+
+    let memo = "";
+    if(service==="airtime") memo = `${document.getElementById("network").value} Airtime ₦${amount} | ${document.getElementById("phone").value}`;
+    if(service==="data") memo = `${document.getElementById("network").value} Data ₦${amount} | ${document.getElementById("phone").value}`;
+    if(service==="electricity") memo = `${document.getElementById("disco").value} Electricity ₦${amount} | Meter ${document.getElementById("meter").value}`;
+    if(service==="betting") memo = `Betting Funding ₦${amount} | ${document.getElementById("phone").value}`;
+    if(service==="cashout") memo = `Cashout ₦${amount} → ${document.getElementById("bankName").value} ${document.getElementById("accNum").value}`;
+
+    try {
+      await Pi.createPayment({
+        amount: piAmount,
+        memo: memo,
+        metadata: {service, amount, phone: document.getElementById("phone").value || "", network: document.getElementById("network").value || "", disco: document.getElementById("disco").value || "", meter: document.getElementById("meter").value || "", bankDetails: localStorage.bank || ""}
+      });
+      alert("Payment received 👑 Delivering instantly...");
+    } catch(e){ alert("Payment cancelled"); }
+  }
+</script>
 </body>
 </html>
