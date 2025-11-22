@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PayPi Nigeria | Airtime • Data • Electricity • Cashout</title>
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-  <script>Pi.init({ version: "2", sandbox: true });</script>  <!-- Change sandbox: false when live -->
+  <script>Pi.init({ version: "2.0", sandbox: true });</script>
+  <!-- Change sandbox: false when live -->
   <button onclick="loginWithPi()">Login with Pi & Pay</button>
-
 <script>
 async function loginWithPi() {
   try {
@@ -64,7 +64,7 @@ async function completePayment(paymentId, txid) {
 </head>
 <body>
   <div class="card">
-    <h1>PayPi Queen 👑</h1>
+    <h1>PayPi </h1>
     <div class="rate">1 π = ₦<span id="rate">860</span></div>
     <select id="service" onchange="toggleService()">
       <option value="">Choose Service</option>
