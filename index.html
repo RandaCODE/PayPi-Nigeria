@@ -3,9 +3,51 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>PayPi Queen 👑 | Airtime • Data • Electricity • Cashout</title>
+  <title>PayPi Nigeria | Airtime • Data • Electricity • Cashout</title>
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-  <script>Pi.init({ version: "2", sandbox: true });</script> <!-- Change sandbox: false when live -->
+  <script>Pi.init({ version: "2", sandbox: true });</script>  <!-- Change sandbox: false when live -->
+  <button onclick="loginWithPi()">Login with Pi & Pay</button>
+
+<script>
+async function loginWithPi() {
+  try {
+    // 1. Login
+    const scopes = ['username', 'payments'];
+    const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
+    alert("Welcome " + auth.user.username + " 👋");
+
+    // 2. Create a test payment (1 Pi)
+    const payment = Pi.createPayment(
+      {
+        amount: 1,
+        memo: "Test payment from Pay Pi Nigeria 🇳🇬",
+        metadata: { purpose: "demo" }
+      },
+      {
+        onReadyForServerApproval: (paymentId) => approvePayment(paymentId),
+        onReadyForServerCompletion: (paymentId, txid) => completePayment(paymentId, txid),
+        onCancel: (paymentId) => alert("Payment cancelled"),
+        onError: (error, payment) => alert("Error: " + error)
+      }
+    );
+
+  } catch (err) {
+    alert("Error: " + err);
+  }
+}
+
+function onIncompletePaymentFound(payment) { 
+  console.log("Pending payment:", payment); 
+}
+
+// You’ll need a tiny backend for these two (I can help you deploy in 5 mins)
+async function approvePayment(paymentId) {
+  // call your /api/approve endpoint
+}
+async function completePayment(paymentId, txid) {
+  // call your /api/complete endpoint
+}
+</script>
   <style>
     body {font-family: system-ui,sans-serif; background: linear-gradient(135deg,#f8f9fa,#e0d4ff); margin:0; padding:15px; min-height:100vh;}
     .card {background:#fff; max-width:400px; margin:15px auto; padding:25px; border-radius:20px; box-shadow:0 10px 30px rgba(90,60,180,0.15);}
