@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   const { paymentId, txid } = req.body;
 
   // ←←← PUT YOUR REAL KEY HERE (copy from Validation-key.txt) ↓↓↓
-  const API_KEY = 0697ec12140936d0d2cab2c0b4eb596bd25b2826305fbe04b12d25708800f998a0c052fc55dae83aac3f11cbd9f6616f2ca5648a552083fcf23c0dacb0eec42b;
+  const API_KEY = "sk_test_0697ec12140936d0d2cab2c0b4eb596bd25b2826305fbe04b12d25708800f998a0c052fc55dae83aac3f11cbd9f6616f2ca5648a552083fcf23c0dacb0eec42b";
 
   try {
     const response = await fetch(`https://api.minepi.com/v2/payments/${paymentId}/complete`, {
