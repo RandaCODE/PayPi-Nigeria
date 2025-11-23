@@ -4,7 +4,7 @@ export default async function handler(req, res) {
 
   const { paymentId, txid } = req.body;
 
-  const API_KEY = "your-secret-api-key-here";  // ← same as above
+  const API_KEY = const API_KEY = process.env.PI_API_KEY;  // ← same as above
 
   try {
     const response = await fetch(`https://api.minepi.com/v2/payments/${paymentId}/complete`, {
