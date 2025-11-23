@@ -6,7 +6,7 @@ export default async function handler(req, res) {
 
   // Your Pi App Credentials (get from https://developers.pi.network/dashboard/)
   const APP_ID = "your-app-id-here";           // ← change
-  const API_KEY = "your-secret-api-key-here";  // ← change (keep secret!)
+  const API_KEY = const API_KEY = process.env.PI_API_KEY;;  // ← change (keep secret!)
 
   try {
     const response = await fetch(`https://api.minepi.com/v2/payments/${paymentId}/approve`, {
