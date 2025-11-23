@@ -1,10 +1,11 @@
 // /api/complete.js
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end();
+  if (req.method !== "POST") return res.status(405).end();
 
   const { paymentId, txid } = req.body;
 
-  const API_KEY = const API_KEY = process.env.PI_API_KEY;  // ← same as above
+  // ←←← PUT YOUR REAL KEY HERE (copy from Validation-key.txt) ↓↓↓
+  const API_KEY = ;
 
   try {
     const response = await fetch(`https://api.minepi.com/v2/payments/${paymentId}/complete`, {
@@ -17,14 +18,15 @@ export default async function handler(req, res) {
     });
 
     if (response.ok) {
-      const data = await response.json();
-      // HERE YOU DELIVER AIRTIME / DATA / CASHOUT
-      console.log("Payment completed!", data);
-      res.status(200).json({ completed: true });
+      console.log("Payment completed!", paymentId, txid);
+      res.status(200).json({ success: true });
     } else {
-      res.status(400).json({ error: "Completion failed" });
+      const errorText = await response.text();
+      console.error("Complete failed:", errorText);
+      res.status(400).json({ error: errorText });
     }
   } catch (e) {
+    console.error("Complete error:", e);
     res.status(500).json({ error: e.message });
   }
 }
