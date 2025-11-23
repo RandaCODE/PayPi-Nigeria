@@ -1,11 +1,11 @@
 // /api/approve.js
-export default async function handler(req, res) {Welcome to Gboard clipboard, any text you copy will be saved here.
+export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
   const { paymentId } = req.body;
 
   // ←←← SAME KEY AS COMPLETE.JS
-  const API_KEY = "sk_test_0697ec12140936d0d2cab2c0b4eb596bd25b2826305fbe04b12d25708800f998a0c052fc55dae83aac3f11cbd9f6616f2ca5648a552083fcf23c0dacb0eec42b";
+  const API_KEY = "sk_live_your_full_key_here_no_quotes_around_this_line";
 
   try {
     const response = await fetch(`https://api.minepi.com/v2/payments/${paymentId}/approve`, {
@@ -28,4 +28,4 @@ export default async function handler(req, res) {Welcome to Gboard clipboard, an
     console.error("Approve error:", e);
     res.status(500).json({ error: e.message });
   }
-}Welcome to Gboard clipboard, any text you copy will be saved here.Tap on a clip to paste it in the text box.Welcome to Gboard clipboard, any text you copy will be saved here.Tap on a clip to paste it in the text box.Welcome to Gboard clipboard, any text you copy will be saved here.
+}
