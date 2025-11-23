@@ -1,12 +1,11 @@
 // /api/approve.js
-export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end();
+export default async function handler(req, res) {Welcome to Gboard clipboard, any text you copy will be saved here.
+  if (req.method !== "POST") return res.status(405).end();
 
   const { paymentId } = req.body;
 
-  // Your Pi App Credentials (get from https://developers.pi.network/dashboard/)
-  const APP_ID = "your-app-id-here";           // ← change
-  const API_KEY = const API_KEY = process.env.PI_API_KEY;  // ← change (keep secret!)
+  // ←←← SAME KEY AS COMPLETE.JS
+  const API_KEY = "sk_live_your_full_key_here_no_quotes_around_this_line";
 
   try {
     const response = await fetch(`https://api.minepi.com/v2/payments/${paymentId}/approve`, {
@@ -18,11 +17,15 @@ export default async function handler(req, res) {
     });
 
     if (response.ok) {
-      res.status(200).json({ approved: true });
+      console.log("Approved:", paymentId);
+      res.status(200).json({ success: true });
     } else {
-      res.status(400).json({ error: "Approval failed" });
+      const errorText = await response.text();
+      console.error("Approve failed:", errorText);
+      res.status(400).json({ error: errorText });
     }
   } catch (e) {
+    console.error("Approve error:", e);
     res.status(500).json({ error: e.message });
   }
-}
+}Welcome to Gboard clipboard, any text you copy will be saved here.Tap on a clip to paste it in the text box.Welcome to Gboard clipboard, any text you copy will be saved here.Tap on a clip to paste it in the text box.Welcome to Gboard clipboard, any text you copy will be saved here.
