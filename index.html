@@ -1,196 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>PayPi Nigeria | Airtime • Data • Bills • Cashout</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PiPay Nigeria - Pay with Pi</title>
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-  <script>
-    Pi.init({ version: "2.0" });   // ← THIS IS CRITICAL
-  </script>
-
   <style>
-    body { font-family: sans-serif; background: linear-gradient(135deg, #f3e7ff, #e3f2fd); margin:0; padding:20px; }
-    .card { background:white; max-width:420px; margin:20px auto; border-radius:20px; padding:25px; box-shadow:0 10px 30px rgba(0,0,0,0.1); }
-    h1 { text-align:center; color:#5B00B4; }
-    input, select { width:100%; padding:14px; margin:10px 0; border:1px solid #ddd; border-radius:12px; font-size:16px; }
-    button { background:#5B00B4; color:white; padding:18px; font-size:20px; width:100%; border:none; border-radius:12px; margin-top:20px; }
-    .hidden { display:none; }
-    .rate { text-align:center; font-size:18px; margin:15px 0; color:#333; }
-    .breakdown { background:#f9f3ff; padding:15px; border-radius:12px; margin:15px 0; }
+    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f0f8ff; }
+    button { padding: 15px 30px; font-size: 18px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+    #status { margin-top: 20px; font-size: 20px; }
   </style>
 </head>
 <body>
+  <h1>PiPay Nigeria</h1>
+  <p>Welcome! Pay for services with Pi.</p>
+  <button onclick="authenticateAndPay()">Pay 10 Pi for Airtime Recharge</button>
+  <div id="status"></div>
 
-<div class="card">
-  <h1>PayPi Nigeria 🇳🇬</h1>
-  <div class="rate">Live rate: <strong>1 Π = ₦<span id="liveRate">349.45</span></strong></div>
+  <script>
+    // Initialize Pi SDK (use sandbox: true for testing on Testnet)
+    Pi.init({ version: "2.0" }); // Remove sandbox for Mainnet
 
-  <select id="service" onchange="showFields()">
-    <option value="">Choose Service</option>
-    <option value="airtime">Airtime Top-up</option>
-    <option value="data">Data Plans</option>
-    <option value="electricity">Electricity Bill</option>
-    <option value="betting">Betting Funding</option>
-    <option value="cashout">Cashout to Bank</option>
-  </select>
+    let userUid = null;
+    const statusDiv = document.getElementById('status');
 
-  <!-- All your existing fields (kept exactly as you had them) -->
-  <div id="networkField" class="hidden">
-    <select id="network">
-      <option value="">Select Network</option>
-      <option>MTN</option><option>Airtel</option><option>Glo</option><option>9mobile</option>
-    </select>
-  </div>
+    // Handle any incomplete payments from previous sessions
+    function onIncompletePaymentFound(payment) {
+      fetch('https://your-backend.com/api/handle-incomplete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payment)
+      }).then(res => res.json()).then(data => console.log('Incomplete handled:', data));
+    }
 
-  <div id="dataPlans" class="hidden"></div>
-
-  <input type="text" id="phone" placeholder="Phone Number" class="hidden"/>
-  <input type="text" id="meter" placeholder="Meter Number" class="hidden"/>
-  <input type="text" id="disco" placeholder="Disco (e.g. IKEJA ELECTRIC)" class="hidden"/>
-
-  <div id="bankFields" class="hidden">
-    <input type="text" id="bankName" placeholder="Bank Name"/><br>
-    <input type="text" id="accNum" placeholder="Account Number"/><br>
-    <input type="text" id="accName" placeholder="Account Name"/>
-  </div>
-
-  <input type="number" id="amount" placeholder="Amount (₦) Minimum ₦100" min="100" step="10"/>
-
-  <div class="breakdown">
-    <div>You pay: <strong><span id="totalPi">0</span> Π</strong></div>
-    <div>You get: ₦<span id="nairaAfterFee">0</span> (after 2.5% fee)</div>
-    <div>Fee: ₦<span id="feeAmount">0</span></div>
-  </div>
-
-  <button onclick="payWithPi()">Pay with Pi 👑</button>
-  <p style="text-align:center; color:#888; font-size:14px;">2.5% fee • Instant delivery</p>
-</div>
-
-<script>
-  let rate = 349.45;   // will be updated live
-
-  // ===== LIVE RATE FETCHER (updates every 10 sec) =====
-  async function updateRate() {
-    try {
-      const res = await fetch('https://api.pi.network/v1/price?currency=NGN');
-      if (res.ok) { const data = await res.json(); rate = data.price || rate; }
-    } catch {
+    // Authenticate user and request payments permission
+    async function authenticate() {
+      const scopes = ['payments']; // Add 'username' if you want username
       try {
-        const res = await fetch('https://pi-price.herokuapp.com/ngn');
-        const data = await res.json();
-        rate = data.rate || rate;
-      } catch {}
-    }
-    document.getElementById("liveRate").innerText = rate.toFixed(2);
-    calculatePi(); // recalculate whenever rate changes
-  }
-  updateRate();
-  setInterval(updateRate, 10000);
-
-  // ===== REAL-TIME CALCULATOR =====
-  document.getElementById("amount").addEventListener("input", calculatePi);
-  function calculatePi() {
-    const naira = parseFloat(document.getElementById("amount").value) || 0;
-    if (naira < 100) {
-      document.getElementById("totalPi").innerText = "0";
-      document.getElementById("nairaAfterFee").innerText = "0";
-      document.getElementById("feeAmount").innerText = "0";
-      return;
-    }
-    const fee = naira * 0.025;
-    const nairaAfter = naira - fee;
-    const totalPi = (naira / rate).toFixed(4);
-
-    document.getElementById("totalPi").innerText = totalPi;
-    document.getElementById("nairaAfterFee").innerText = nairaAfter.toFixed(0);
-    document.getElementById("feeAmount").innerText = fee.toFixed(0);
-  }
-
-  // ===== SHOW/HIDE FIELDS (your original logic) =====
-  function showFields() {
-    const service = document.getElementById("service").value;
-    document.getElementById("phone").classList.toggle("hidden", !["airtime","data","betting"].includes(service));
-    document.getElementById("networkField").classList.toggle("hidden", !["airtime","data"].includes(service));
-    document.getElementById("dataPlans").classList.toggle("hidden", service !== "data");
-    document.getElementById("meter").classList.toggle("hidden", service !== "electricity");
-    document.getElementById("disco").classList.toggle("hidden", service !== "electricity");
-    document.querySelectorAll("#bankFields input").forEach(el => el.classList.toggle("hidden", service !== "cashout"));
-  }
-
-  // ===== MAIN PAYMENT FUNCTION (one button does everything) =====
-  async function payWithPi() {
-    const service = document.getElementById("service").value;
-    const amount = parseFloat(document.getElementById("amount").value);
-
-    if (!service) return alert("Pick a service queen 👑");
-    if (amount < 100) return alert("₦100 minimum");
-
-    const piAmount = Number((amount / rate).toFixed(4));
-
-    // Build memo
-    let memo = "";
-    if (service === "airtime") memo = `${document.getElementById("network").value} Airtime ₦${amount} | ${document.getElementById("phone").value}`;
-    if (service === "data") memo = `${document.getElementById("network").value} Data ₦${amount} | ${document.getElementById("phone").value}`;
-    if (service === "electricity") memo = `${document.getElementById("disco").value} Electricity ₦${amount} | Meter ${document.getElementById("meter").value}`;
-    if (service === "betting") memo = `Betting Funding ₦${amount} | ${document.getElementById("phone").value}`;
-    if (service === "cashout") memo = `Cashout ₦${amount} → ${document.getElementById("bankName").value} ${document.getElementById("accNum").value}`;
-
-    // Save bank details for cashout
-    if (service === "cashout") {
-      localStorage.bank = JSON.stringify({
-        bankName: document.getElementById("bankName").value,
-        accNum: document.getElementById("accNum").value,
-        accName: document.getElementById("accName").value
-      });
+        const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
+        userUid = auth.user.uid;
+        statusDiv.innerHTML = `Hello, Pioneer! Ready to pay with Pi.`;
+        console.log('Authenticated UID:', userUid);
+        return true;
+      } catch (err) {
+        statusDiv.innerHTML = `Authentication failed: ${err.message}`;
+        console.error(err);
+        return false;
+      }
     }
 
-    try {
-      // 1. Authenticate + request payment in one flow
-      const scopes = ['username', 'payments'];
-      const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
+    // Initiate Pi payment (customize amount/memo/metadata)
+    async function initiatePayment() {
+      const paymentData = {
+        amount: 10.0, // Amount in Pi
+        memo: "Airtime Recharge ₦5000 - PiPay Nigeria", // Shown to user
+        metadata: { service: "airtime", order_id: "ORDER_" + Date.now(), user_uid: userUid }
+      };
 
-      await Pi.createPayment({
-        amount: piAmount,
-        memo: memo,
-        metadata: {
-          service,
-          amount,
-          phone: document.getElementById("phone").value || "",
-          network: document.getElementById("network").value || "",
-          disco: document.getElementById("disco").value || "",
-          meter: document.getElementById("meter").value || "",
-          bankDetails: localStorage.bank || ""
+      const callbacks = {
+        onReadyForServerApproval: (paymentId) => {
+          statusDiv.innerHTML = "Approving payment...";
+          fetch('https://your-backend.com/api/approve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentId })
+          })
+          .then(res => res.json())
+          .then(data => console.log('Approved:', data))
+          .catch(err => console.error('Approval error:', err));
+        },
+        onReadyForServerCompletion: (paymentId, txid) => {
+          statusDiv.innerHTML = "Completing payment...";
+          fetch('https://your-backend.com/api/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentId, txid })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              statusDiv.innerHTML = "Payment successful! Airtime delivered.";
+              // Deliver service here (e.g., call airtime API)
+            }
+          })
+          .catch(err => console.error('Completion error:', err));
+        },
+        onCancel: (paymentId) => {
+          statusDiv.innerHTML = "Payment cancelled.";
+        },
+        onError: (error, payment) => {
+          statusDiv.innerHTML = `Error: ${error.message}`;
+          console.error(error);
         }
-      }, {
-        onReadyForServerApproval: approvePayment,
-        onReadyForServerCompletion: completePayment,
-        onCancel: () => alert("Payment cancelled"),
-        onError: (err) => alert("Error: " + err)
-      });
+      };
 
-    } catch (e) {
-      alert("Payment cancelled or failed");
+      try {
+        await Pi.createPayment(paymentData, callbacks);
+      } catch (err) {
+        statusDiv.innerHTML = `Payment error: ${err.message}`;
+      }
     }
-  }
 
-  // ===== BACKEND HOOKS (you’ll create these API routes next) =====
-  async function approvePayment(paymentId) {
-    await fetch('/api/approve', { method: 'POST', body: JSON.stringify({paymentId}) });
-  }
-  async function completePayment(paymentId, txid) {
-    await fetch('/api/complete', { method: 'POST', body: JSON.stringify({paymentId, txid}) });
-    alert("Payment received 💚 Delivering instantly...");
-  }
+    // Full flow: Authenticate then pay
+    async function authenticateAndPay() {
+      const authenticated = await authenticate();
+      if (authenticated) {
+        await initiatePayment();
+      }
+    }
 
-  function onIncompletePaymentFound(payment) {
-    console.log("Incomplete payment found:", payment);
-    // optionally auto-resume
-  }
-
-  // Auto-calculate on load if amount already filled
-  calculatePi();
-</script>
-
+    // Auto-auth on page load (optional)
+    // authenticate();
+  </script>
 </body>
 </html>
